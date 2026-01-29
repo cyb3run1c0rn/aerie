@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Execution Ledger",
+  "description": "Schema placeholder for the AERIE Execution Ledger. The ledger is an append-only, tamper-evident record of execution events. Storage and implementation details are defined in later phases.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": []
+}

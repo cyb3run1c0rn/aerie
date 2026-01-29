@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Capability Token",
+  "description": "Canonical schema for AERIE Capability Tokens. Capability tokens grant explicit, least-privilege execution authority. This placeholder will be expanded in Phase 8.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": []
+}

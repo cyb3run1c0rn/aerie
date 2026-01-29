@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Execution Record",
+  "description": "Canonical schema for AERIE Execution Records. Execution records capture a single governed action attempt and form entries in the immutable execution ledger.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": []
+}

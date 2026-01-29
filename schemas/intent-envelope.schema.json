@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Intent Envelope",
+  "description": "Canonical schema for the AERIE Intent Envelope. This file defines the authoritative representation of explicit human intent. It is intentionally incomplete and will be finalised during Phase 8 (Implementation Handoff).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": []
+}
