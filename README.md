@@ -105,3 +105,20 @@ AERIE is successful if:
 
 Phase 0 complete once this document is approved and frozen.
 Future phases may extend functionality, but must not contradict the intent set here.
+
+## Licensing (RAPTOR-Aligned)
+
+**AERIE** is dual-licensed to ensure wide accessibility while providing a sustainable model for future development.
+
+### Free (Non-Commercial Use)
+- **Personal use**
+- **Academic, research, and non-profit use**
+- **Internal use and evaluation**  
+  You are welcome to study, modify, and use AERIE in non-commercial environments, provided you maintain attribution.  
+  **No commercial revenue generation is allowed without proper licensing.**
+
+### Commercial Use Requires a License
+- If you are selling a product or service using AERIE or its derivatives, embedding AERIE into a commercial platform, or offering paid consulting where AERIE is a core deliverable, a commercial license is required.
+- For **commercial licensing**, please contact us at: **[contact@promptsmiths.space](mailto:contact@promptsmiths.space)**
+
+For detailed licensing terms, please refer to the [LICENSE](LICENSE) and [COMMERCIAL LICENSE](LICENSES/COMMERCIAL-LICENSE.md) files.

@@ -1,0 +1,1 @@
+This software is licensed under the Non-Commercial License. You are free to use, modify, and distribute the code, provided it is for non-commercial purposes only. If you wish to use the software commercially, you must obtain a commercial license.
