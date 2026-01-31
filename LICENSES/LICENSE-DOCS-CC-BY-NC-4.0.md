@@ -1,0 +1,1 @@
+This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. You may copy, distribute, and modify the work, as long as it is not used commercially. You must provide appropriate attribution, and indicate if changes were made. For commercial use, please contact the author for a commercial license.
