@@ -1,7 +1,4 @@
-# aerie
-A governed AI execution plane enforcing explicit intent, least privilege, and full auditability.
-
-# AERIE — Phase 0: Positioning & Intent
+# AERIE — A governed AI execution plane enforcing explicit intent, least privilege, and full auditability.
 
 ## Purpose
 
@@ -9,7 +6,7 @@ This document establishes *what AERIE is*, *what it is not*, and *who it is for*
 
 ---
 
-## One‑Sentence Description (Killer Line)
+## Description
 
 **A governed AI execution plane that lets intelligent agents act with real power, while enforcing explicit human intent, least‑privilege capabilities, and full auditability by design.**
 
@@ -31,7 +28,7 @@ Organisations need AI systems that can *act*—not just think—without sacrific
 * A **human‑authorised** execution layer enforcing least privilege
 * An **audit‑first** design suitable for regulated environments
 
-AERIE is designed to sit *downstream* of cognitive systems (e.g. PAI), receiving structured intent and deciding **if, how, and under what constraints** execution may occur.
+AERIE is designed to sit *downstream* of cognitive systems (e.g. Local LLM agents etc), receiving structured intent and deciding **if, how, and under what constraints** execution may occur.
 
 ---
 
@@ -60,7 +57,7 @@ Primary:
 
 Secondary:
 
-* Advanced individual practitioners using PAI‑style systems
+* Advanced individual practitioners using Personal AI‑style systems
 * Researchers exploring safe agent execution
 * Standards and assurance bodies
 
