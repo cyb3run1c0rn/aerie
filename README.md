@@ -1,5 +1,22 @@
 # AERIE — A governed AI execution plane enforcing explicit intent, least privilege, and full auditability.
 
+## 📄 Architectural Paper
+
+**From Policy to Enforcement: An Architectural Pattern for Governed AI Execution**
+
+This paper proposes the **AI Execution Control Plane** — an architectural pattern for enforcing governance at the execution boundary of agentic AI systems.
+
+AERIE is presented as a **reference architecture** instantiating this pattern using:
+- Structured intent envelopes
+- Capability-scoped execution authority
+- Non-bypassable policy enforcement
+- Immutable execution ledgers
+
+📘 Preprint (arXiv): [ADD_ARXIV_LINK_HERE]
+📂 Paper source (LaTeX): [./paper](./paper)
+📑 PDF version: [./paper/From_Policy_to_Enforcement.pdf](./paper/From_Policy_to_Enforcement.pdf)
+
+
 ## Purpose
 
 This document establishes *what AERIE is*, *what it is not*, and *who it is for*. It is the canonical reference that prevents architectural drift and misinterpretation as the system evolves.
@@ -102,6 +119,25 @@ AERIE is successful if:
 
 Phase 0 complete once this document is approved and frozen.
 Future phases may extend functionality, but must not contradict the intent set here.
+
+
+## Citation
+
+If referencing this work:
+
+Stockdale, W. (2026). *From Policy to Enforcement: An Architectural Pattern for Governed AI Execution*. arXiv preprint.
+
+BibTeX:
+
+```bibtex
+@article{stockdale2026policy,
+  author  = {Stockdale, Warren},
+  title   = {From Policy to Enforcement: An Architectural Pattern for Governed AI Execution},
+  journal = {arXiv preprint},
+  year    = {2026}
+}
+```
+
 
 ## Licensing (RAPTOR-Aligned)
 
