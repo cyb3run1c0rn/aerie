@@ -1,0 +1,437 @@
+\documentclass[11pt,a4paper]{article}
+
+% ─── Packages ───
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}                  % Times Roman
+\usepackage[british]{babel}
+\usepackage[margin=2.5cm,headheight=14pt]{geometry}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage[round,authoryear]{natbib}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+
+% ─── Header / Footer ───
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textit{\small Stockdale (2026) --- Preprint}}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ─── Hyperlinks ───
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue!60!black,
+    urlcolor=blue!60!black
+}
+
+% ─── Spacing ───
+\onehalfspacing
+
+\begin{document}
+
+% ═══════════════════════════════════════════════════
+% TITLE
+% ═══════════════════════════════════════════════════
+
+\begin{center}
+    {\LARGE\bfseries From Policy to Enforcement:\\[4pt]
+    An Architectural Pattern for Governed AI Execution}\\[20pt]
+    {\large Warren Stockdale MSc.}\\[4pt]
+    PromptSmith Ltd\\
+    United Kingdom\\[20pt]
+\end{center}
+\bigskip
+
+% ═══════════════════════════════════════════════════
+% ABSTRACT
+% ═══════════════════════════════════════════════════
+
+\begin{abstract}
+\noindent As artificial intelligence systems transition from passive decision-support tools to active, agentic systems capable of initiating real-world actions, existing approaches to AI governance exhibit structural limitations. Regulatory frameworks such as the EU Artificial Intelligence Act \citep{europeancommission2024}, the NIST AI Risk Management Framework \citep{nist2023}, and UK National Cyber Security Centre guidance \citep{ncsc2024} require auditability, human oversight, risk management, and control, yet deliberately avoid prescribing technical architectures for achieving these outcomes.
+
+This paper identifies five structural failure modes in policy-only governance regimes---detection lag, provenance gaps, human review bottlenecks, adversarial evasion, and compliance theatre---and proposes an architectural pattern, the AI Execution Control Plane, that enforces governance at the point of execution rather than relying on retrospective assurance. The primary contribution is the pattern itself: a composable set of design primitives grounded in capability-based security, reference monitor design, and mandatory access control. AERIE (Agent Execution and RAPTOR-Governed Intent Envelope) is presented as a reference architecture instantiating this pattern, demonstrating how structured human intent, scoped execution authority, non-bypassable policy enforcement, and immutable decision artefacts can translate regulatory expectations into enforced technical controls.
+\end{abstract}
+
+\bigskip
+\noindent\textbf{Keywords:} AI governance, agentic AI, execution control plane, capability-based security, policy enforcement, human oversight, regulatory compliance
+\newpage
+\tableofcontents
+\newpage
+
+
+% ═══════════════════════════════════════════════════
+% 1. INTRODUCTION
+% ═══════════════════════════════════════════════════
+
+\section{Introduction}
+
+AI governance has become a central concern for regulators, organisations, and system designers. Recent years have seen a convergence of international frameworks emphasising trustworthy, controllable, and auditable AI systems \citep{europeancommission2024,nist2023,ncsc2024}. Despite differences in jurisdiction and legal force, these frameworks share a common characteristic: they specify outcomes, not architectures.
+
+Organisations are therefore left to determine how requirements such as human oversight, traceability, proportionality, and accountability should be implemented in practice. In many cases, governance has been addressed through policy documents, risk registers, approval workflows, and post-deployment monitoring. While these measures provide organisational assurance, they do not prevent unauthorised or unsafe AI actions from occurring at runtime.
+
+This paper contends that the governance problem is fundamentally architectural. As AI systems gain the ability to act autonomously---invoking tools, modifying systems, or initiating transactions---governance must move from observation to enforcement. The central thesis is that governance should be embedded directly into the execution path of AI systems, rather than layered on as an external control. The primary contribution is an architectural pattern---the AI Execution Control Plane---together with a reference architecture (AERIE) that instantiates its design primitives. The paper proceeds by examining the structural limitations of retrospective governance (Section~\ref{sec:limits}), analysing the gap between regulatory intent and technical implementation (Section~\ref{sec:regulatory}), defining the execution control plane and its primitives (Sections~\ref{sec:controlplane}--\ref{sec:primitives}), demonstrating regulatory alignment by construction (Section~\ref{sec:alignment}), comparing the approach with contemporary alternatives (Section~\ref{sec:comparison}), and discussing limitations and future work (Section~\ref{sec:limitations}).
+
+\newpage
+
+% ═══════════════════════════════════════════════════
+% 2. LIMITS OF POLICY-BASED GOVERNANCE
+% ═══════════════════════════════════════════════════
+
+\section{Limits of Policy-Based and Post-Hoc AI Governance}
+\label{sec:limits}
+
+\subsection{Structural weaknesses of retrospective governance}
+
+Policy-based governance relies on documented rules, acceptable-use statements, contractual assurances, and periodic audits to constrain AI behaviour. Post-hoc governance supplements this with logging, telemetry, and retrospective human review. These approaches align with established compliance practices and impose relatively low upfront technical cost. However, practitioner postmortems, regulatory enforcement actions, and a growing body of empirical research identify five structural failure modes that render this model inadequate for agentic AI systems.
+
+\textbf{Detection lag and irreparable harm.} AI systems operate at machine speed; governance processes operate at human speed. In agentic contexts---where a single prompt can trigger chains of tool invocations, API calls, and state mutations---the window between action and detection may be measured in milliseconds, yet consequences may include regulatory fines, data breaches, or reputational damage. The OWASP Top 10 for LLM Applications identifies this temporal mismatch as a core risk factor \citep{owasp2025}, and industry analyses of agentic deployments corroborate the problem \citep{zenity2025}.
+
+\textbf{Provenance gaps and forensic insufficiency.} Logs may be incomplete, lack turn-level granularity, or fail to preserve causal linkage between model reasoning and downstream actions. In healthcare, research indicates that AI audit trails are frequently not integrated into clinical incident processes, undermining retrospective accountability \citep{murdoch2021}. In financial services, vendor opacity and trade-secret claims can prevent meaningful internal audits \citep{langer2025}.
+
+\textbf{Human review bottlenecks and automation bias.} Human reviewers under time pressure are subject to overload and automation bias. Research demonstrates that decision-makers frequently defer to AI recommendations even when incorrect, a phenomenon that intensifies under cognitive load \citep{schemmer2022}. Post-hoc review further suffers from \textit{authority drift}: the nominal power to override AI decisions erodes in practice through organisational incentives and workflow design.
+
+\textbf{Adversarial evasion.} Adversarial techniques erode the effectiveness of post-hoc controls. Indirect prompt injection can manipulate large language models via untrusted external content, bypassing intended guardrails \citep{greshake2023}. Adversarial prompting can reliably subvert model instructions and safety constraints through crafted inputs \citep{perez2022}. These techniques operate beneath the detection threshold of output-filtering and log-review mechanisms.
+
+\textbf{Compliance theatre.} Perhaps the most consequential failure mode is the presence of governance artefacts---policies, registers, checklists---that satisfy procedural requirements without constraining system behaviour. Practitioners and sociotechnical researchers describe this variously as `governance theatre' or `compliance theatre' \citep{guidepost}. The term is used here as a practitioner construct rather than a formal academic concept, but it captures a widely recognised pattern: governance that exists on paper but not in practice.
+
+\newpage
+
+\subsection{Documented governance failures in deployed systems}
+
+The insufficiency of policy-only governance is not merely theoretical. The following cases, illustrative rather than exhaustive, demonstrate that formal governance measures can fail to prevent serious harm.
+
+\textbf{Robodebt (Australia).} An automated debt-recovery programme used data-matching and income-averaging algorithms to generate debt notices. The scheme operated with bureaucratic policies and ministerial approvals, yet produced unlawful determinations and severe distress among welfare recipients. The Royal Commission found systemic governance failures despite extensive documentation \citep{robodebt2023}.
+
+\textbf{Volkswagen emissions software.} Volkswagen maintained formal compliance functions and public environmental commitments, yet software was engineered to evade laboratory emissions tests---a widely cited case of software-enabled non-compliance despite an extensive governance apparatus \citep{ewing2017}.
+
+\textbf{Recruitment algorithm bias.} Amazon's early recruiting prototype reportedly exhibited systematic gender discrimination and was ultimately abandoned, illustrating limitations of upstream data governance despite internal policy frameworks \citep{dastin2018}.
+
+\textbf{Clinical decision support.} IBM Watson Health projects were promoted with clinical-validation claims, but evaluations revealed poor accuracy and overpromising of capabilities. While detailed peer-reviewed assessments of specific deployments remain limited, journalistic and practitioner analyses document a persistent gap between governance claims and clinical outcomes \citep{strickland2019,ross2018}.
+
+These cases share a common structural feature: governance artefacts existed but did not prevent harm because they operated outside the execution path of the systems they were intended to constrain.
+
+\subsection{The excessive agency problem in agentic systems}
+
+The emergence of tool-calling, multi-step AI agents intensifies these failure modes. The OWASP Top 10 for LLM Applications identifies excessive agency---granting more functionality, permissions, or autonomy than necessary---as a principal vulnerability \citep{owasp2025}. Security researchers have documented reproducible attack classes exploiting over-privileged agents, including confused-deputy abuses, tool and plugin backdoors, context-poisoning attacks, and classical authorisation failures exposed through LLM tooling \citep{cobalt2025,entro2025}.
+
+Industry reports describe incidents including malicious plugins exfiltrating email contents, AI assistants manipulated into approving fraudulent transactions, and large-scale campaigns exploiting exposed model endpoints \citep{protecto2025,techzine2026}. While many of these accounts originate from vendor security analyses rather than peer-reviewed research, the consistency of reported patterns across independent sources supports the underlying threat model. Conventional RBAC and synchronous monitoring assume predictable, human-driven flows; agentic systems break that assumption by operating multi-step reasoning chains, consulting mutable memory, invoking external tools, and making decisions without per-step human approval. Defences based solely on static permission reviews, network-level controls, or output filtering appear insufficient without fine-grained capability gating and runtime policy enforcement.
+
+% ═══════════════════════════════════════════════════
+% 3. REGULATORY INTENT
+% ═══════════════════════════════════════════════════
+
+\section{Regulatory Intent and Architectural Silence}
+\label{sec:regulatory}
+
+\subsection{Deliberate non-prescriptiveness across frameworks}
+
+Major AI governance frameworks deliberately avoid prescribing technical architectures. The EU AI Act imposes binding obligations on high-risk systems---including record-keeping, human oversight, and risk management---while leaving implementation choices to system designers \citep{europeancommission2024}. The NIST AI RMF adopts an outcomes-based, voluntary approach structured around governance, mapping, measurement, and management functions \citep{nist2023}. UK NCSC guidance emphasises secure-by-design principles without mandating specific enforcement mechanisms \citep{ncsc2024}.
+
+This architectural silence is intentional, preserving technological neutrality. However, it creates what practitioners have termed the \textit{design gap}: the recurring deficiency where organisations possess governance documents, committees, and checklists without mapping them to concrete sensing, decision, and actuation mechanisms in engineering workflows \citep{kavanagh2023}. As characterised in practitioner literature, the design gap distinguishes governance as narrative from governance as control system. The absence of prescribed architectures does not imply the absence of architectural necessity.
+
+\subsection{Emerging signals toward architectural enforcement}
+
+Despite the non-prescriptive framing, evidence from recent years suggests movement from high-level principles toward obligations that presuppose---and in some cases require---technical controls as the primary means of compliance.
+
+Management-system standards such as ISO/IEC 42001 and risk guidance such as ISO/IEC 23894 call for traceability, impact assessments, data governance, and lifecycle controls that are practically implementable only via metadata, lineage systems, and telemetry. Certification under these standards requires technical artefacts and demonstrable controls \citep{iso2023}. NIST's cybersecurity overlays map AI-specific controls to SP~800-53 and emphasise continuous monitoring and integration of AI risk into security baselines---an architectural framing that implies policy enforcement points and runtime defences \citep{nist2023}.
+
+Jurisdictional regulators appear to be reinforcing this trajectory. The EU's risk-based regime and newly enacted state-level laws in the United States press for demonstrable controls rather than aspirational statements. Federal agency playbooks are explicitly charged with operationalising risk rubrics through inventories, metrics, and technical controls---moving compliance into pipelines, SRE processes, and procurement artefacts \citep{gsa2025}.
+
+Across these materials, a consistent set of enforcement mechanisms is either explicitly recommended or directly implied: model and dataset attestations; provenance and lineage metadata; immutable telemetry and tamper-evident logging; runtime monitoring and anomaly detection; policy enforcement points and standardised control APIs; compute and access controls including sandboxing and gated deployment; and formalised interfaces for auditors and regulators. It is argued that these mechanisms are the operational predicates for demonstrating conformity, not optional best practices \citep{iso2023,nist2023}.
+
+% ═══════════════════════════════════════════════════
+% 4. THE AI EXECUTION CONTROL PLANE
+% ═══════════════════════════════════════════════════
+
+\section{The AI Execution Control Plane}
+\label{sec:controlplane}
+
+\subsection{Conceptual foundation}
+
+In systems engineering, control planes determine whether actions may occur, while data planes carry them out. Applying this distinction to AI systems yields the concept of an AI Execution Control Plane: a non-bypassable architectural layer that mediates all AI-initiated actions.
+
+Rather than observing AI behaviour after execution, the control plane evaluates proposed actions before they occur, enforcing authorisation, policy compliance, and evidence generation as prerequisites. The concept draws on mandatory access control, reference monitor design, and capability-based security, extending them to the specific requirements of agentic AI governance.
+
+\subsection{Absence of a canonical definition}
+
+A review of academic literature reveals no canonical definition of an `AI execution control plane'. Relevant concepts appear across capability-based security, mandatory access control, MLOps orchestration, human-in-the-loop gating, and provenance systems \citep{hardy1985,watson2010,miller2003}.
+
+Industry usage of the term often conflates orchestration with enforcement, prioritising integration velocity over non-bypassable control. Some vendor implementations claim structural impossibility of disallowed actions---a design-time property---while simultaneously offering runtime policy checks, an execution-plane capability. This conflation requires scrutiny of what is actually enforced, where, and how \citep{salunkhe,hoop}. These industry sources, while not peer-reviewed, illustrate the terminological confusion motivating the definition of a unifying pattern grounded in established security principles.
+
+\newpage
+
+% ═══════════════════════════════════════════════════
+% 5. RAPTOR
+% ═══════════════════════════════════════════════════
+
+\section{RAPTOR as the Human Governance Interface}
+\label{sec:raptor}
+
+Human oversight is frequently interpreted as review or escalation. Research suggests that such interpretations fail to constrain AI behaviour at runtime \citep{langer2025}. For oversight to function as a genuine control, human intent must be translated into a form that machines can enforce deterministically.
+
+RAPTOR (Role, Aim, Parameters, Tone, Output, Review) serves this function by encoding human intent as a structured, reviewable artefact. Within the execution control plane, RAPTOR declarations are evaluated before execution authority is granted. Intent therefore becomes an authorisation primitive, binding human judgement directly to AI action.
+
+This approach represents a broader class of governance mechanisms in which human intent is encoded as a structured, enforceable artefact rather than expressed as natural-language policy. The distinction is significant: advisory oversight relies on humans detecting and correcting problems after they manifest, whereas structured intent specification prevents unauthorised actions from executing in the first instance. RAPTOR operationalises this principle by making the separation between cognition and authority explicit: AI systems may reason, plan, and propose freely, but may not act without explicitly issued authority.
+
+RAPTOR is one instantiation of structured intent specification; alternative formalisms for encoding human intent into machine-enforceable constraints may be equally viable. The architectural contribution of this paper lies in the principle of intent-as-authorisation, not in the specific schema.
+
+% ═══════════════════════════════════════════════════
+% 6. DESIGN PRIMITIVES
+% ═══════════════════════════════════════════════════
+
+\section{Design Primitives of a Governed AI Execution Plane}
+\label{sec:primitives}
+
+The execution control plane is realised through a small set of composable primitives, each grounded in established security engineering:
+
+\textbf{Intent Envelope}---an immutable representation of authorised purpose and constraints, derived from structured intent declarations. The intent envelope binds human-specified objectives and boundaries to a machine-evaluable format, serving as the authoritative source of permitted action scope.
+
+\textbf{Governance and Policy Engine}---a deterministic evaluation mechanism assessing proposed actions against intent, organisational policy, regulatory constraints, and runtime context. This component functions as a reference monitor in the classical security sense, providing complete mediation of execution requests.
+
+\textbf{Capability Tokens}---scoped, time-bound execution authority encoded as capabilities, drawing on capability-based security research \citep{hardy1985,watson2010,miller2003}. Capability tokens embody least privilege in a form that is both enforceable and auditable.
+
+\textbf{Trust Boundary}---a hard separation between AI cognition and real-world action, preventing unauthorised execution. This boundary ensures that reasoning and planning do not constitute action, and that only explicitly authorised operations cross into the execution domain.
+
+\textbf{Immutable Execution Ledger}---an append-only, tamper-resistant record binding intent, policy decision, capability issuance, and execution outcome. The ledger provides the evidentiary basis for auditability and accountability requirements across regulatory frameworks.
+
+Together, these primitives are designed to transform governance from a managerial assurance mechanism into an architecturally enforced property. The degree to which this transformation is achievable in practice is discussed in Section~\ref{sec:limitations}.
+
+% ═══════════════════════════════════════════════════
+% 7. REGULATORY ALIGNMENT
+% ═══════════════════════════════════════════════════
+
+\section{Regulatory Alignment by Construction}
+\label{sec:alignment}
+
+Mapping execution control plane properties to regulatory expectations suggests that compliance can emerge structurally from architecture rather than being applied retrospectively:
+
+\textbf{Human oversight} is enforced through authority issuance rather than advisory review, addressing the EU AI Act's requirement for meaningful human control (Article~14) and NIST's Govern function expectation that override authority be defined with auditable records.
+
+\textbf{Auditability} is intrinsic, with complete decision lineage preserved as immutable artefacts---fulfilling the Act's tamper-resistant logging requirements (Article~12) and ISO/IEC~42001's expectation of traceable records.
+
+\textbf{Least privilege} is continuous, enforced through ephemeral, scoped capabilities that align with NCSC secure-by-design guidance and NIST's emphasis on proportionate access controls.
+
+\textbf{Risk proportionality} is dynamic, applied per action rather than statically at system level, supporting the Act's proportionality language and NIST's profile-driven evidence model.
+
+\textbf{Accountability} is explicit and attributable rather than inferred post-hoc, addressing GDPR accountability obligations and the Act's conformity assessment requirements (Article~43).
+
+This alignment-by-construction approach also addresses concerns identified in recent work: that the measurement problem for oversight effectiveness and the new attack surfaces oversight mechanisms can introduce are both structurally mitigated when oversight is embedded in the execution path rather than layered externally \citep{langer2025,ditz2025}. It is acknowledged that demonstrating full alignment-by-construction in practice would require formal verification of the policy engine's completeness and correctness---a challenge discussed in Section~\ref{sec:limitations}.
+
+% ═══════════════════════════════════════════════════
+% 8. COMPARISON
+% ═══════════════════════════════════════════════════
+
+\section{Comparison with Contemporary Agent Frameworks and Governance Approaches}
+\label{sec:comparison}
+
+\subsection{Agent framework security models}
+
+Contemporary agent frameworks---including LangChain, AutoGen, CrewAI, and similar orchestration platforms---manage behaviour through guardrails, monitoring, and orchestration. These approaches detect or discourage undesirable actions but cannot guarantee prevention; they remain probabilistic and reactive.
+
+Industry security analyses identify convergence around three authorisation models: RBAC for role grouping, attribute-based and policy-based access control (ABAC/PBAC) for context-aware decisions, and capability-style tokens for fine-grained tool invocation. Reported practices include per-agent scoping, just-in-time elevation, automated token rotation, and vaulted secret storage \citep{obsidian2025,workos2025,composio2026}. At runtime, enforcement typically mixes cryptographic and platform controls: short-lived tokens bind intent and actor, centralised policy engines make contextual decisions, and sandboxing constrains tool execution.
+
+However, these controls operate at the framework level rather than as a non-bypassable architectural layer. Industry analyses suggest that default or persistent permissions concentrate risk: over-privilege expands blast radius; recursive delegation without scope attenuation enables cross-agent privilege escalation; and persistent tokens create footholds for supply-chain attacks. Standard authorisation checks do not verify whether the observed action matches the original intent \citep{lumos2025,okta2025,acuvity2025}. These findings derive primarily from vendor analyses and practitioner reports and should be weighted accordingly.
+
+\subsection{Governance-by-design approaches}
+
+A parallel class of research and practitioner initiatives asserts governance by design: embedding governance requirements into architecture, data pipelines, and development lifecycles so that safety and compliance become structural properties. These approaches draw on high-reliability engineering and include model cards \citep{mitchell2019}, dataset documentation, CI/CD release gates, lineage systems, and policy-as-code frameworks \citep{kavanagh2023}.
+
+Governance-by-design raises baseline assurance and can simplify audits by reducing the set of unsafe states a system can enter. However, it primarily addresses design-time and build-time governance. Emergent behaviour, long-tail interactions, and adversarial inputs at inference time cannot be fully anticipated at design time. Runtime enforcement therefore remains necessary as a complementary layer.
+
+\subsection{The execution control plane distinction}
+
+It is argued that the execution control plane differs from both categories in a fundamental respect: it manages authority, not behaviour. Actions that are not authorised cannot occur. Orchestration coordinates execution; control determines permission. Table~\ref{tab:comparison} summarises the key differences.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of governance enforcement approaches.}
+\label{tab:comparison}
+\small
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+\textbf{Property} & \textbf{Agent Frameworks} & \textbf{Governance by Design} & \textbf{Execution Control Plane} \\
+\midrule
+Enforcement point   & Framework-level guardrails      & Build/deploy gates             & Runtime execution path \\
+Bypass resistance   & Probabilistic (can be evaded)   & Pre-deployment only            & Non-bypassable by construction \\
+Authority model     & Static RBAC or broad tokens     & Policy-as-code at CI/CD        & Per-action capability tokens \\
+Human oversight     & Escalation workflows            & Approval gates at release      & Authority issuance at intent \\
+Audit evidence      & Logs (mutable, optional)        & Build artefacts, model cards   & Immutable execution ledger \\
+Scope of control    & Model outputs                   & Development lifecycle          & Every AI-initiated action \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This comparison suggests that existing approaches address important parts of the governance problem but leave a structural gap at the point where AI systems take real-world actions. The execution control plane addresses this gap by operating at the boundary between cognition and consequence.
+
+% ═══════════════════════════════════════════════════
+% 9. LIMITATIONS
+% ═══════════════════════════════════════════════════
+
+\section{Limitations and Future Work}
+\label{sec:limitations}
+
+This paper proposes an architectural pattern rather than a fully standardised or empirically validated implementation. While the execution control plane is grounded in established security principles, several limitations must be acknowledged.
+
+First, performance and latency impacts of fine-grained, per-action authorisation require empirical evaluation at scale. The operational burden of structured intent specification may prove significant in high-throughput environments. Prototype deployments in regulated settings are needed to quantify these trade-offs.
+
+Second, formal verification of policy engines and ledger integrity is an open research problem. While tamper-evident logging and cryptographic anchoring are well-understood primitives, their composition within an AI execution context warrants formal analysis to establish the conditions under which the `non-bypassable' property holds.
+
+Third, human factors---including usability of structured intent specification, cognitive load of RAPTOR declarations, and design of governance workflows---warrant systematic user studies to avoid trading one form of governance burden for another. Recent work highlights shortfalls in standardised assessment procedures and interoperable attestations, where policy demands outpace available technical standards \citep{agarwal2025}.
+
+Fourth, cross-provider provenance in federated training, robust watermarking for generative outputs, secure attestations for models and datasets, and harmonised telemetry schemas remain open challenges affecting practical deployment of execution-level controls.
+
+Fifth, this paper relies in several areas on industry reports, vendor security analyses, and practitioner commentary as evidence for threat models and failure modes. While these sources reflect operational experience, they have not undergone peer review and may carry vendor bias. As the academic literature on agentic AI security matures, stronger empirical grounding for these claims will be both possible and necessary.
+
+Sixth, RAPTOR is presented as one instantiation of structured intent specification. Comparative evaluation against alternative intent-encoding formalisms---and empirical assessment of whether structured intent specification delivers measurable governance improvements---remains an open question.
+
+Future work should include prototype deployments in regulated environments, formal security proofs for execution boundary enforcement, comparative evaluation against alternative governance mechanisms, user studies of structured intent specification, and engagement with standards bodies developing architectural requirements for AI governance. The convergence of ISO, NIST, and jurisdictional regulators toward architectural enforcement suggests that voluntary adoption of these patterns may precede mandatory requirements.
+
+\pagebreak
+
+% ═══════════════════════════════════════════════════
+% 10. CONCLUSION
+% ═══════════════════════════════════════════════════
+
+\section{Conclusion}
+
+This paper has argued that AI governance must evolve from assurance to enforcement. As AI systems assume operational responsibility---initiating actions, invoking tools, and modifying external systems---architectures that embed governance into the execution path become a necessity rather than a preference.
+
+The evidence assembled here---from documented governance failures in deployed systems, to the structural limitations of policy-only regimes, to the emerging regulatory trajectory toward architectural controls---supports a clear conclusion: the gap between governance intent and governance enforcement is an architectural problem requiring an architectural solution.
+
+The AI Execution Control Plane, instantiated through the AERIE reference architecture, provides a coherent response grounded in established security principles. By making governance an unavoidable property of the execution path, it offers a foundation for deploying agentic AI systems that are not merely capable, but defensible. The degree to which this pattern can be validated empirically and adopted at scale remains the subject of future work.
+
+\newpage
+
+% ═══════════════════════════════════════════════════
+% REFERENCES
+% ═══════════════════════════════════════════════════
+
+\bibliographystyle{agsm}
+
+\begin{thebibliography}{99}
+
+\bibitem[Acuvity(2025)]{acuvity2025}
+Acuvity (2025) \textit{The Agent Integrity Framework: the new standard for securing autonomous AI}. [Industry report] Available at: \url{https://acuvity.ai/} (Accessed: 2026).
+
+\bibitem[Agarwal and Nene(2025)]{agarwal2025}
+Agarwal, S. and Nene, M.J. (2025) `Shortfalls in standardised assessment procedures for AI governance', preprint.
+
+\bibitem[Cobalt(2025)]{cobalt2025}
+Cobalt (2025) `LLM vulnerability: excessive agency', \textit{Cobalt Blog}. [Industry analysis] Available at: \url{https://www.cobalt.io/blog/llm-vulnerability-excessive-agency} (Accessed: 2026).
+
+\bibitem[Composio(2026)]{composio2026}
+Composio (2026) \textit{Secure AI agent infrastructure guide}. [Practitioner guide] Available at: \url{https://composio.dev/blog/secure-ai-agent-infrastructure-guide} (Accessed: 2026).
+
+\bibitem[Dastin(2018)]{dastin2018}
+Dastin, J. (2018) `Amazon scraps secret AI recruiting tool that showed bias against women', \textit{Reuters}, 10 October.
+
+\bibitem[DigitalDefynd(2026)]{digitaldefynd2026}
+DigitalDefynd (2026) \textit{AI governance failures: case studies and lessons}. [Practitioner case review] Available at: \url{https://digitaldefynd.com/} (Accessed: 2026).
+
+\bibitem[Ditz et~al.(2025)]{ditz2025}
+Ditz, J. et~al. (2025) `Attack surfaces of human oversight in AI systems', \textit{arXiv preprint}.
+
+\bibitem[Entro Security(2025)]{entro2025}
+Entro Security (2025) `Agentic AI and OWASP: research findings', \textit{Entro Security Blog}. [Industry analysis] Available at: \url{https://entro.security/blog/agentic-ai-owasp-research/} (Accessed: 2026).
+
+\bibitem[European Commission(2024)]{europeancommission2024}
+European Commission (2024) Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act). \textit{Official Journal of the European Union}.
+
+\bibitem[Ewing(2017)]{ewing2017}
+Ewing, J. (2017) \textit{Faster, Higher, Farther: The Volkswagen Scandal}. New York: W.W. Norton.
+
+\bibitem[Greshake et~al.(2023)]{greshake2023}
+Greshake, K., Abdelnabi, S., Mishra, S., Endres, C., Holz, T. and Fritz, M. (2023) `Not what you've signed up for: compromising real-world LLM-integrated applications with indirect prompt injection', \textit{arXiv preprint}, arXiv:2302.12173.
+
+\bibitem[GSA(2025)]{gsa2025}
+GSA (2025) \textit{AI guidance and resources}. Washington, DC: U.S. General Services Administration. Available at: \url{https://www.gsa.gov/technology/government-it-initiatives/artificial-intelligence/} (Accessed: 2026).
+
+\bibitem[Guidepost Solutions(n.d.)]{guidepost}
+Guidepost Solutions (n.d.) \textit{AI governance: bridging the gap between policy and practice}. [Practitioner analysis] Available at: \url{https://www.guidpostsolutions.com/} (Accessed: 2026).
+
+\bibitem[Hardy(1985)]{hardy1985}
+Hardy, N. (1985) `The KeyKOS architecture', \textit{ACM SIGOPS Operating Systems Review}, 19(4), pp.~8--25.
+
+\bibitem[Hoop(n.d.)]{hoop}
+Hoop (n.d.) \textit{Why action-level approvals matter for AI policy enforcement}. [Vendor documentation] Available at: \url{https://hoop.dev/} (Accessed: 2026).
+
+\bibitem[ISO(2023)]{iso2023}
+ISO (2023) \textit{ISO/IEC 42001:2023 --- Artificial intelligence management system}. Geneva: International Organization for Standardization.
+
+\bibitem[Kavanagh(2023)]{kavanagh2023}
+Kavanagh, D. (2023) `The design gap in AI governance', \textit{AI Governance Career Pro}. [Practitioner commentary] Available at: \url{https://governance.aicareer.pro/} (Accessed: 2026).
+
+\bibitem[Langer et~al.(2025)]{langer2025}
+Langer, M. et~al. (2025) `Measurement and effectiveness challenges for human oversight of AI', \textit{arXiv preprint}.
+
+\bibitem[Lumos(2025)]{lumos2025}
+Lumos (2025) `Agentic AI: identity governance and management', \textit{Lumos Blog}. [Industry analysis] Available at: \url{https://www.lumos.com/} (Accessed: 2026).
+
+\bibitem[Miller, Yee and Shapiro(2003)]{miller2003}
+Miller, M.S., Yee, K.-P. and Shapiro, J. (2003) `Capability myths demolished', \textit{Technical Report SRL2003-02}. Baltimore, MD: Johns Hopkins University.
+
+\bibitem[Mitchell et~al.(2019)]{mitchell2019}
+Mitchell, M. et~al. (2019) `Model cards for model reporting', in \textit{Proceedings of the Conference on Fairness, Accountability, and Transparency (FAT* '19)}. New York: ACM, pp.~220--228.
+
+\bibitem[Murdoch(2021)]{murdoch2021}
+Murdoch, B. (2021) `Privacy and artificial intelligence: challenges for protecting health information in a new era of medicine', \textit{BMC Medical Ethics}, 22, article~122.
+
+\bibitem[NCSC(2024)]{ncsc2024}
+NCSC (2024) \textit{Guidelines for secure AI system development}. London: National Cyber Security Centre.
+
+\bibitem[NIST(2023)]{nist2023}
+NIST (2023) \textit{Artificial intelligence risk management framework (AI RMF 1.0). NIST AI 100-1}. Gaithersburg, MD: National Institute of Standards and Technology.
+
+\bibitem[Obsidian Security(2025)]{obsidian2025}
+Obsidian Security (2025) `Security for AI agents', \textit{Obsidian Security Blog}. [Industry analysis] Available at: \url{https://www.obsidiansecurity.com/} (Accessed: 2026).
+
+\bibitem[Okta(2025)]{okta2025}
+Okta (2025) `Agent security and the delegation chain', \textit{Okta Blog}. [Vendor analysis] Available at: \url{https://www.okta.com/blog/ai/agent-security-delegation-chain/} (Accessed: 2026).
+
+\bibitem[OWASP(2025)]{owasp2025}
+OWASP (2025) \textit{OWASP Top 10 for Large Language Model Applications: LLM08 --- Excessive Agency}. Available at: \url{https://genai.owasp.org/} (Accessed: 2026).
+
+\bibitem[Perez and Ribeiro(2022)]{perez2022}
+Perez, F. and Ribeiro, I. (2022) `Ignore this title and HackAPrompt: exposing systemic weaknesses of LLMs through a global scale prompt hacking competition', \textit{arXiv preprint}, arXiv:2211.09527.
+
+\bibitem[Protecto(2025)]{protecto2025}
+Protecto (2025) `AI agents excessive agency risks', \textit{Protecto Blog}. [Industry analysis] Available at: \url{https://www.protecto.ai/} (Accessed: 2026).
+
+\bibitem[Ross and Swetlitz(2018)]{ross2018}
+Ross, C. and Swetlitz, I. (2018) `IBM's Watson supercomputer recommended unsafe and incorrect cancer treatments, internal documents show', \textit{STAT News}, 25 July.
+
+\bibitem[Royal Commission into the Robodebt Scheme(2023)]{robodebt2023}
+Royal Commission into the Robodebt Scheme (2023) \textit{Report}. Canberra: Commonwealth of Australia.
+
+\bibitem[Salunkhe(n.d.)]{salunkhe}
+Salunkhe, S. (n.d.) `AI control plane: governance before models, around agents', \textit{LinkedIn Pulse}. [Practitioner commentary] Available at: \url{https://www.linkedin.com/} (Accessed: 2026).
+
+\bibitem[Schemmer et~al.(2022)]{schemmer2022}
+Schemmer, M., Hemmer, P., K{\"u}hl, N., Benz, C. and Satzger, G. (2022) `Should I follow AI-based advice? Measuring appropriate reliance in human-AI decision-making', \textit{arXiv preprint}, arXiv:2204.06916.
+
+\bibitem[Strickland(2019)]{strickland2019}
+Strickland, E. (2019) `IBM Watson, heal thyself: how IBM overpromised and underdelivered on AI health care', \textit{IEEE Spectrum}, 2 April.
+
+\bibitem[Techzine(2026)]{techzine2026}
+Techzine (2026) `First large-scale LLMjacking generates tens of thousands of attacks', \textit{Techzine / Pillar Security}. [Industry report] Available at: \url{https://www.techzine.eu/} (Accessed: 2026).
+
+\bibitem[Watson et~al.(2010)]{watson2010}
+Watson, R.N.M., Anderson, J., Laurie, B. and Kennaway, K. (2010) `Capsicum: practical capabilities for UNIX', in \textit{Proceedings of the 19th USENIX Security Symposium}. Washington, DC: USENIX Association, pp.~29--45.
+
+\bibitem[WorkOS(2025)]{workos2025}
+WorkOS (2025) `AI agent access control', \textit{WorkOS Blog}. [Industry analysis] Available at: \url{https://workos.com/blog/ai-agent-access-control} (Accessed: 2026).
+
+\bibitem[Zenity(2025)]{zenity2025}
+Zenity (2025) `Securing AI where it acts: why agents now define AI risk', \textit{Zenity Blog}. [Industry analysis] Available at: \url{https://zenity.io/} (Accessed: 2026).
+
+\end{thebibliography}
+
+\end{document}
