@@ -14,7 +14,7 @@ AERIE is presented as a **reference architecture** instantiating this pattern us
 
 📘 Preprint (arXiv): [ADD_ARXIV_LINK_HERE]
 📂 Paper source (LaTeX): [./paper](./paper)
-📑 PDF version: [./paper/From_Policy_to_Enforcement.pdf](./paper/From_Policy_to_Enforcement.pdf)
+📑 PDF version: [From_Policy_to_Enforcement_AERIE.pdf](paper/From_policy_to_enforcement__AERIE.pdf)
 
 
 ## Purpose
